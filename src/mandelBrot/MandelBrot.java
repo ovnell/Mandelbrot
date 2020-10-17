@@ -14,7 +14,6 @@ public class MandelBrot {
 
 	private static final int MAX_ITERATIONS = 1000;
 	private static final double ZOOM_FACTOR = 1.5;
-	private static final double MOVE_FACTOR = 0.1;
 	private static final String TITLE = "Mandelbrot";
 
 	private static final int width = 1000;
@@ -43,6 +42,7 @@ public class MandelBrot {
 	}
 
 	private void render() {
+		long updateInterval = 100L;	// in milliseconds
 		long startTime = System.currentTimeMillis();
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
@@ -59,9 +59,10 @@ public class MandelBrot {
 				window.setPixel(x, yp, palette(it));
 			}
 			long time = System.currentTimeMillis();
-			if (time - startTime > 1000L) {
-				System.out.printf("%f%% done\n", x * 100.0 / width);
-				startTime += 1000L;
+			if (time - startTime > updateInterval) {
+				String title = String.format("%.0f%%", x * 100.0 / width);
+				window.setTitle(title);
+				startTime += updateInterval;
 			}
 		}
 		String title = String.format("%s x: %.15f, y: %.15f\n", TITLE, xSize, ySize);
@@ -191,18 +192,6 @@ public class MandelBrot {
 				System.exit(0);
 			}
 			switch (e.getKeyChar()) {
-			case 'w':
-				move(0.0, ySize * MOVE_FACTOR);
-				break;
-			case 'a':
-				move(-xSize * MOVE_FACTOR, 0.0);
-				break;
-			case 's':
-				move(0.0, -ySize * MOVE_FACTOR);
-				break;
-			case 'd':
-				move(xSize * MOVE_FACTOR, 0.0);
-				break;
 			case 'r':
 				reset();
 				break;
