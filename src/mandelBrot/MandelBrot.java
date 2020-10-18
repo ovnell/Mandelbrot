@@ -7,17 +7,22 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import pixelWindow.PixelWindow;
 
 public class MandelBrot {
 
+	private static final int THREADS = 8;
+	private static final int PARTITIONS = 32;
+
 	private static final int MAX_ITERATIONS = 1000;
 	private static final double ZOOM_FACTOR = 1.5;
 	private static final String TITLE = "Mandelbrot";
 
-	private static final int width = 500;
-	private static final int height = 350;
+	private static final int width = 1000;
+	private static final int height = 700;
 	private PixelWindow window = new PixelWindow(width, height, TITLE);
 
 	private static final double X_START = -2.3;
@@ -30,6 +35,8 @@ public class MandelBrot {
 	private double xSize = X_SIZE;
 	private double ySize = Y_SIZE;
 
+	private ExecutorService pool;
+
 	public static void main(String[] args) {
 		new MandelBrot().run();
 	}
@@ -37,15 +44,37 @@ public class MandelBrot {
 	private void run() {
 		window.addMouseWheelListener(new Scroller());
 		window.addKeyListener(new Mover());
-		window.addMouseMotionListener(new Dragger());
+		Dragger d = new Dragger();
+		window.addMouseMotionListener(d);
+		window.addMouseListener(d);
 		render();
 	}
 
 	private void render() {
-		long updateInterval = 100L; // in milliseconds
-		long startTime = System.currentTimeMillis();
-		for (int x = 0; x < width; x++) {
-			for (int y = 0; y < height; y++) {
+		long startTime = System.nanoTime();
+
+		pool = Executors.newFixedThreadPool(THREADS);
+		for (int i = 0; i < PARTITIONS; i++) {
+			int xStart = i * width / PARTITIONS;
+			int xEnd = (i + 1) * width / PARTITIONS;
+			pool.execute(new Renderer(xStart, xEnd - xStart));
+			//render(xStart, 0, xEnd - xStart, height);
+		}
+
+		// Wait for the threads to finish
+		pool.shutdown();
+		while (!pool.isTerminated()) {
+		}
+
+		long time = System.nanoTime();
+		String title = String.format("%s x: %.15f, y: %.15f %.0fms/frame", TITLE, xSize, ySize, 1e-6 * (time - startTime));
+		window.setTitle(title);
+		window.render();
+	}
+
+	private void render(int startX, int startY, int dx, int dy) {
+		for (int x = startX; x < startX + dx; x++) {
+			for (int y = startY; y < startY + dy; y++) {
 				int yp = height - y - 1; // reverse y
 				double x0 = getX(x);
 				double y0 = getY(y);
@@ -58,16 +87,7 @@ public class MandelBrot {
 				}
 				window.setPixel(x, yp, palette(it));
 			}
-			long time = System.currentTimeMillis();
-			if (time - startTime > updateInterval) {
-				String title = String.format("%.0f%%", x * 100.0 / width);
-				window.setTitle(title);
-				startTime += updateInterval;
-			}
 		}
-		String title = String.format("%s x: %.15f, y: %.15f\n", TITLE, xSize, ySize);
-		window.setTitle(title);
-		window.render();
 	}
 
 	private double getX(double x) {
@@ -114,8 +134,24 @@ public class MandelBrot {
 		render();
 	}
 
+	private class Renderer implements Runnable {
+		int xStart, dx;
+
+		public Renderer(int xStart, int dx) {
+			this.xStart = xStart;
+			this.dx = dx;
+		}
+
+		@Override
+		public void run() {
+			render(xStart, 0, dx, height);
+		}
+	}
+
+	// Only moves when you release the mouse button
 	private class Dragger implements MouseMotionListener, MouseListener {
 		private int x = -1, y = -1;
+		private int dx = 0, dy = 0;
 
 		@Override
 		public void mouseDragged(MouseEvent e) {
@@ -124,11 +160,8 @@ public class MandelBrot {
 			if (y == -1)
 				y = e.getY();
 			if (window.mouseButtonPressed(MouseEvent.BUTTON1)) {
-				int dx = e.getX() - x;
-				int dy = e.getY() - y;
-				double xMove = -((double) dx) / width * xSize;
-				double yMove = ((double) dy) / height * ySize;
-				move(xMove, yMove);
+				dx += e.getX() - x;
+				dy += e.getY() - y;
 			}
 			x = e.getX();
 			y = e.getY();
@@ -158,6 +191,10 @@ public class MandelBrot {
 
 		@Override
 		public void mouseReleased(MouseEvent e) {
+			double xMove = -((double) dx) / width * xSize;
+			double yMove = ((double) dy) / height * ySize;
+			move(xMove, yMove);
+			dx = dy = 0;
 		}
 
 	}
