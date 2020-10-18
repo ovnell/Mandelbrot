@@ -16,13 +16,13 @@ public class MandelBrot {
 	private static final double ZOOM_FACTOR = 1.5;
 	private static final String TITLE = "Mandelbrot";
 
-	private static final int width = 1000;
-	private static final int height = 700;
+	private static final int width = 500;
+	private static final int height = 350;
 	private PixelWindow window = new PixelWindow(width, height, TITLE);
 
-	private static final double X_START = -2.0;
-	private static final double Y_START = X_START * height / width;
-	private static final double X_SIZE = 4.0;
+	private static final double X_START = -2.3;
+	private static final double X_SIZE = 3.5;
+	private static final double Y_START = -X_SIZE * height / width / 2.0;
 	private static final double Y_SIZE = X_SIZE * height / width;
 
 	private double xStart = X_START;
@@ -42,7 +42,7 @@ public class MandelBrot {
 	}
 
 	private void render() {
-		long updateInterval = 100L;	// in milliseconds
+		long updateInterval = 100L; // in milliseconds
 		long startTime = System.currentTimeMillis();
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
@@ -81,22 +81,14 @@ public class MandelBrot {
 	}
 
 	private int palette(int it) {
-		/*
-		 * if (it == MAX_ITERATIONS) { return 0; } int startRed = 0x00, startGreen =
-		 * 0x00, startBlue = 0xFF; int endRed = 0xFF, endGreen = 0xFF, endBlue = 0xFF;
-		 * int r = startRed + (int) (scale * (endRed - startRed)); int g = startGreen +
-		 * (int) (scale * (endGreen - startGreen)); int b = startBlue + (int) (scale *
-		 * (endBlue - startBlue)); return r + g + b;
-		 */
 		if (it == MAX_ITERATIONS) {
 			return 0;
 		}
-
 		double scale = ((double) it) / MAX_ITERATIONS;
 		int greyScale = 0xFF / 2 + (int) (0.5 * scale * 0xFF);
 		return greyScale * 0x10000 + greyScale * 0x100 + greyScale;
 	}
-	
+
 	private void zoom(double amount) {
 		double sizeMultiple = 1.0 / amount;
 		double x = window.getMouseX(), y = window.getMouseY();
@@ -107,13 +99,13 @@ public class MandelBrot {
 		ySize *= sizeMultiple;
 		render();
 	}
-	
+
 	private void move(double dx, double dy) {
 		xStart += dx;
 		yStart += dy;
 		render();
 	}
-	
+
 	private void reset() {
 		xStart = X_START;
 		yStart = Y_START;
@@ -183,9 +175,9 @@ public class MandelBrot {
 	}
 
 	private class Mover implements KeyListener {
-		
+
 		private static final double BIG_ZOOM = 10.0;
-		
+
 		@Override
 		public void keyPressed(KeyEvent e) {
 			if (e.getKeyChar() == KeyEvent.VK_ESCAPE) {
