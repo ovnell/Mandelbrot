@@ -36,7 +36,7 @@ public class MandelBrot {
 	private double ySize = Y_SIZE;
 
 	private ExecutorService pool;
-
+	
 	public static void main(String[] args) {
 		new MandelBrot().run();
 	}
@@ -52,8 +52,8 @@ public class MandelBrot {
 
 	private void render() {
 		long startTime = System.nanoTime();
-
 		pool = Executors.newFixedThreadPool(THREADS);
+		
 		for (int i = 0; i < PARTITIONS; i++) {
 			int xStart = i * width / PARTITIONS;
 			int xEnd = (i + 1) * width / PARTITIONS;
@@ -104,9 +104,9 @@ public class MandelBrot {
 		if (it == MAX_ITERATIONS) {
 			return 0;
 		}
-		double scale = ((double) it) / MAX_ITERATIONS;
+		double scale = ((double) it) / MAX_ITERATIONS;	// 0 to 1
 		int greyScale = 0xFF / 2 + (int) (0.5 * scale * 0xFF);
-		return greyScale * 0x10000 + greyScale * 0x100 + greyScale;
+		return PixelWindow.getColorCode(greyScale, greyScale, greyScale);
 	}
 
 	private void zoom(double amount) {
