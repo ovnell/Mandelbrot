@@ -34,6 +34,7 @@ public class MandelBrot {
 	private double yStart = Y_START;
 	private double xSize = X_SIZE;
 	private double ySize = Y_SIZE;
+	private int maxIterations = MAX_ITERATIONS;
 
 	private ExecutorService pool;
 	
@@ -67,7 +68,7 @@ public class MandelBrot {
 		}
 
 		long time = System.nanoTime();
-		String title = String.format("%s x: %.15f, y: %.15f %.0fms/frame", TITLE, xSize, ySize, 1e-6 * (time - startTime));
+		String title = String.format("%s    x: %.15f, y: %.15f    %.0fms/frame    %d iterations", TITLE, xSize, ySize, 1e-6 * (time - startTime), maxIterations);
 		window.setTitle(title);
 		window.render();
 	}
@@ -80,7 +81,7 @@ public class MandelBrot {
 				double y0 = getY(y);
 				double xx = 0.0, yy = 0.0;
 				int it = 0;
-				for (; xx * xx + yy * yy < 4.0 && it < MAX_ITERATIONS; it++) {
+				for (; xx * xx + yy * yy < 4.0 && it < maxIterations; it++) {
 					double xTemp = xx * xx - yy * yy + x0;
 					yy = 2 * xx * yy + y0;
 					xx = xTemp;
@@ -101,10 +102,10 @@ public class MandelBrot {
 	}
 
 	private int palette(int it) {
-		if (it == MAX_ITERATIONS) {
+		if (it == maxIterations) {
 			return 0;
 		}
-		double scale = ((double) it) / MAX_ITERATIONS;	// 0 to 1
+		double scale = ((double) it) / maxIterations;	// 0 to 1
 		int greyScale = 0xFF / 2 + (int) (0.5 * scale * 0xFF);
 		return PixelWindow.getColorCode(greyScale, greyScale, greyScale);
 	}
@@ -131,6 +132,11 @@ public class MandelBrot {
 		yStart = Y_START;
 		xSize = X_SIZE;
 		ySize = Y_SIZE;
+		render();
+	}
+	
+	private void setMaxIterations(int maxIterations) {
+		this.maxIterations = maxIterations;
 		render();
 	}
 
@@ -229,6 +235,15 @@ public class MandelBrot {
 				break;
 			case '-':
 				zoom(1.0 / BIG_ZOOM);
+				break;
+			case 'o':
+				setMaxIterations(maxIterations * 2);
+				break;
+			case 'l':
+				setMaxIterations(maxIterations / 2);
+				break;
+			case 'k':
+				setMaxIterations(MAX_ITERATIONS);
 				break;
 			}
 		}
