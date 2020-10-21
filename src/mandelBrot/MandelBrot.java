@@ -136,8 +136,10 @@ public class MandelBrot {
 	}
 	
 	private void setMaxIterations(int maxIterations) {
-		this.maxIterations = maxIterations;
-		render();
+		if (maxIterations > 0) {
+			this.maxIterations = maxIterations;
+			render();
+		}
 	}
 
 	private class Renderer implements Runnable {
